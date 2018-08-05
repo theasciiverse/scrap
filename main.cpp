@@ -19,6 +19,7 @@
  */
 
 #include "main.h"
+#include <cstring>
 
 int main() {
     bool runprogram = true;

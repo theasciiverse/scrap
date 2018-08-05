@@ -21,6 +21,7 @@
 #include "being.h"
 #include "item.h"
 #include "game.h"
+#include <cstring>
 #include "ui.h" // needs to come last to avoid curses/std-conflict
 
 extern Interface UI;

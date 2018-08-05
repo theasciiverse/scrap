@@ -22,6 +22,7 @@
 #include "game.h"
 #include "event.h"
 #include "rng.h"
+#include <cstring>
 
 extern Interface UI;
 

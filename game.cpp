@@ -21,6 +21,7 @@
 #include "game.h"
 #include "data.h"
 #include "rng.h"
+#include <cstring>
 
 extern Interface UI;
 
