@@ -1,0 +1,5 @@
+# Scrap: the game, its readme and manual, and the GPL
+out/scrap
+README.md
+manual.txt
+COPYING
