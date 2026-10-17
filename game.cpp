@@ -26,6 +26,13 @@
 extern Interface UI;
 
 #include <cstdio>
+#include <cstdlib>
+#include <string>
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 
 #undef clear
 #undef erase
@@ -363,6 +370,38 @@ interest in this game.");
     }
 }
 
+// Asciiverse: the savefile lives in the player's data folder, not in
+// the folder the game was started from: $XDG_DATA_HOME/scrap (else
+// ~/.local/share/scrap), or %APPDATA%\scrap on Windows.
+static std::string savefilename() {
+    std::string dir;
+#ifdef _WIN32
+    const char * appdata = getenv("APPDATA");
+    if (appdata && *appdata) {
+        dir = std::string(appdata) + "\\scrap";
+        _mkdir(dir.c_str());
+        return dir + "\\scrap.sav";
+    }
+#else
+    const char * xdg = getenv("XDG_DATA_HOME");
+    const char * home = getenv("HOME");
+    if (xdg && xdg[0] == '/')
+        dir = xdg;
+    else if (home && *home) {
+        dir = std::string(home) + "/.local";
+        mkdir(dir.c_str(), 0755);
+        dir += "/share";
+    }
+    if (!dir.empty()) {
+        mkdir(dir.c_str(), 0755);
+        dir += "/scrap";
+        mkdir(dir.c_str(), 0755);
+        return dir + "/scrap.sav";
+    }
+#endif
+    return "scrap.sav";
+}
+
 bool Game::savegame() {
     std::ofstream fout;
 
@@ -370,7 +409,7 @@ bool Game::savegame() {
                     | std::ofstream::failbit
                     | std::ofstream::badbit);
     try {
-        fout.open("scrap.sav");
+        fout.open(savefilename().c_str());
         save(fout);
     }
     catch (std::ofstream::failure e) {
@@ -388,7 +427,7 @@ bool Game::loadgame() {
                    | std::ifstream::failbit
                    | std::ifstream::badbit);
     try {
-        fin.open("scrap.sav");
+        fin.open(savefilename().c_str());
         load(fin);
     }
     catch (std::ofstream::failure e) {
@@ -399,7 +438,7 @@ bool Game::loadgame() {
     }
     fin.close();
 #ifndef DEBUG
-    remove("scrap.sav");
+    remove(savefilename().c_str());
 #endif
 
     return true;
