@@ -26,8 +26,42 @@
 
 extern Interface UI;
 
+// Asciiverse: the game draws its 80x25 screen on a pad, which every
+// key read shows centred in the terminal, also after a resize. While
+// the pad exists, stdscr points at it, so the drawing code is unchanged.
+static const int FIELDLINES = DISPLAYTOP + DISPLAYHEIGHT;
+static const int FIELDCOLS = STATUSLEFT + STATUSWIDTH;
+static WINDOW * field = NULL;
+static WINDOW * screenwin = NULL;
+static int shownlines = -1, showncols = -1;
+
+static void showfield() {
+    if (field == NULL) {
+        refresh();
+        return;
+    }
+    stdscr = screenwin;
+    if (LINES != shownlines || COLS != showncols) {
+        // the field moved: blank the old place
+        werase(screenwin);
+        wnoutrefresh(screenwin);
+        shownlines = LINES;
+        showncols = COLS;
+    }
+    int top = LINES > FIELDLINES ? (LINES - FIELDLINES) / 2 : 0;
+    int left = COLS > FIELDCOLS ? (COLS - FIELDCOLS) / 2 : 0;
+    int lines = FIELDLINES < LINES ? FIELDLINES : LINES;
+    int cols = FIELDCOLS < COLS ? FIELDCOLS : COLS;
+    pnoutrefresh(field, 0, 0, top, left, top + lines - 1, left + cols - 1);
+    doupdate();
+    stdscr = field;
+}
+
 bool Interface::init() {
     initscr();
+#ifdef NCURSES_VERSION
+    set_escdelay(25); // Esc cancels; do not wait a second for more keys
+#endif
     cbreak();
     noecho();
     nonl();
@@ -71,18 +105,31 @@ bool Interface::init() {
     clear();
     refresh();
 
+    field = newpad(FIELDLINES, FIELDCOLS);
+    if (field != NULL) {
+        intrflush(field, FALSE);
+        keypad(field, TRUE);
+        screenwin = stdscr;
+        stdscr = field;
+        shownlines = showncols = -1;
+    }
+
     msgdisplaylen = 0;
 
     return true;
 }
 
 void Interface::close() {
-    refresh();
+    showfield();
 #ifdef DEBUG
     msg("The application is about to exit.", COLOR_LWHITE);
     moreprompt();
 #endif
-    delwin(stdscr);
+    if (field != NULL) {
+        stdscr = screenwin;
+        delwin(field);
+        field = NULL;
+    }
     endwin();
 }
 
@@ -98,14 +145,23 @@ void Interface::display(int row, int column, char data, int fore, int back) {
 int Interface::getkey() {
     int key;
     
-    refresh();
-    key = getch();
+    showfield();
+    while ((key = getch()) == KEY_RESIZE) {
+#ifdef PDCURSES
+        resize_term(0, 0);
+#endif
+        if (field == NULL)
+            return key;
+        showfield();
+    }
+    if (field != NULL)
+        stdscr = field;
     
     return key;
 }
 
 void Interface::clearscreen() {
-    for (int i = DISPLAYTOP; i < LINES; i++) {
+    for (int i = DISPLAYTOP; i < getmaxy(stdscr); i++) {
         move(i, 0);
         clrtoeol();
     }
@@ -153,7 +209,7 @@ void Interface::msg(char * msg, int fore) {
     msgdisplaylen += printlen + 1;
 
 #ifdef DEBUG
-    refresh();
+    showfield();
 #endif
 }
 
