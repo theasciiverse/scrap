@@ -56,6 +56,7 @@ Game & Game::operator=(const Game & rhs) {
     map = rhs.map;
     queue = rhs.queue;
     level = rhs.level;
+    prevtarget = rhs.prevtarget;
 
     return *this;
 }
