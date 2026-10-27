@@ -1,3 +1,16 @@
+> **Play it with Asciiverse.** With [av](https://asciiverse.sh), the Asciiverse
+> client:
+>
+> ```
+> av install scrap
+> av play scrap
+> ```
+>
+> Or download the archive for your system from this repository's Releases,
+> unpack it and run `./scrap` (`scrap.exe` on Windows).
+>
+> The original README follows.
+
 # scrap
 
 Scrap is a roguelike game that was originally written during a period

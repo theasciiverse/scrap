@@ -91,3 +91,9 @@ recording driver in `--soak` mode (two runs of ten minutes: down to level
 build before our changes took 132,000 random key presses, without a
 report. Windows: cross-built with MinGW and PDCurses 3.9; not run (no
 Wine here). macOS: not built here.
+
+## Ours
+
+- **How to play it, at the top of README.md.** A short note on installing and
+  starting it with av, or from a release archive; the original text follows
+  unchanged.
